@@ -1,163 +1,85 @@
-name: Build CineGen AI APK
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+package com.cinegen.ai;
 
-permissions:
-  contents: read
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebView;
+import android.webkit.WebSettings;
+import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.ConsoleMessage;
+import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
 
-jobs:
-  build:
-    name: Build Android APK
-    runs-on: ubuntu-latest
+public class MainActivity extends Activity {
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    private WebView webView;
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        getWindow().setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        );
 
-      - name: Create Android Project
-        run: |
-          mkdir -p app/src/main/assets
-          mkdir -p app/src/main/java/com/cinegen/ai
+        webView = new WebView(this);
+        setContentView(webView);
 
-          if [ ! -f index.html ]; then
-            echo "ERROR: index.html tidak ditemukan di root repository."
-            exit 1
-          fi
+        WebSettings settings = webView.getSettings();
 
-          cp index.html app/src/main/assets/index.html
+        // JavaScript
+        settings.setJavaScriptEnabled(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-          cat > settings.gradle <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
+        // Web storage
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
 
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
+        // Local HTML access
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
 
-          rootProject.name = "CineGenAI"
-          include(":app")
-          EOF
+        // Display
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setSupportZoom(false);
 
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.7.3' apply false
-          }
-          EOF
+        webView.setWebViewClient(new WebViewClient());
 
-          cat > app/build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application'
-          }
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage message) {
+                Log.d(
+                    "CineGenAI",
+                    message.message() + " -- Line: " + message.lineNumber()
+                );
+                return true;
+            }
+        });
 
-          android {
-              namespace 'com.cinegen.ai'
-              compileSdk 35
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-              defaultConfig {
-                  applicationId 'com.cinegen.ai'
-                  minSdk 23
-                  targetSdk 35
-                  versionCode 1
-                  versionName '1.0'
-              }
-          }
-          EOF
+        webView.loadUrl("file:///android_asset/index.html");
+    }
 
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
 
-              <uses-permission android:name="android.permission.INTERNET" />
-
-              <application
-                  android:allowBackup="true"
-                  android:label="CineGen AI"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:usesCleartextTraffic="false">
-
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-          cat > app/src/main/java/com/cinegen/ai/MainActivity.java <<'EOF'
-          package com.cinegen.ai;
-
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.webkit.WebView;
-          import android.webkit.WebSettings;
-          import android.webkit.WebViewClient;
-          import android.webkit.WebChromeClient;
-
-          public class MainActivity extends Activity {
-
-              private WebView webView;
-
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  webView = new WebView(this);
-                  setContentView(webView);
-
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-
-                  webView.setWebViewClient(new WebViewClient());
-                  webView.setWebChromeClient(new WebChromeClient());
-
-                  webView.loadUrl("file:///android_asset/index.html");
-              }
-
-              @Override
-              public void onBackPressed() {
-                  if (webView != null && webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
-                  }
-              }
-          }
-          EOF
-
-      - name: Build Debug APK
-        run: gradle assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: CineGen-AI-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
+    }
+}

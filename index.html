@@ -742,4 +742,53 @@
 
       document.getElementById("playBtn").textContent = "▶ Play";
       setStatus("Download Ready", "green");
+      
+    };
+
+    recording = true;
+    elapsed = 0;
+    startTime = performance.now();
+    isPlaying = true;
+
+    recorder.start();
+
+    document.getElementById("playBtn").textContent = "⏸ Pause";
+    setStatus("Recording", "red");
+
+    animate();
+  }
+
+  // SETTINGS
+  function openSettings() {
+    const modal = document.getElementById("settingsModal");
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function closeSettings() {
+    const modal = document.getElementById("settingsModal");
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+
+  function saveSettings() {
+    closeSettings();
+    alert("Versi demo belum terhubung ke layanan AI Video. API key belum digunakan.");
+  }
+
+  // CLEAR PROMPT
+  function clearPrompt() {
+    promptInput.value = "";
+    document.getElementById("charCount").textContent = "0 / 1500";
+    promptInput.focus();
+  }
+
+  // INITIALIZE
+  resizeCanvas();
+  drawScene(0);
+</script>
+
+</body>
+</html>
+
    

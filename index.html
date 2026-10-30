@@ -1,0 +1,745 @@
+
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09090f">
+  <meta name="description" content="CineGen AI - AI Prompt to Video Studio">
+  <title>CineGen AI - Video Studio</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#8b5cf6',
+            darkbg: '#09090f',
+            panel: '#151521'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      background: #09090f;
+      color: #f8fafc;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .glass {
+      background: rgba(21, 21, 33, .88);
+      border: 1px solid rgba(139, 92, 246, .18);
+      border-radius: 16px;
+    }
+
+    .gradient {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    textarea, input, select {
+      background: #0d0d17 !important;
+      color: white !important;
+      border: 1px solid #33334a !important;
+      outline: none;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: #8b5cf6 !important;
+    }
+
+    button { transition: .2s; }
+    button:active { transform: scale(.97); }
+
+    .loader {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ffffff44;
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #111;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="border-b border-white/10 sticky top-0 z-50 bg-[#09090f]/95 backdrop-blur-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl gradient flex items-center justify-center text-xl">
+        🎬
+      </div>
+      <div>
+        <h1 class="font-black text-xl gradient-text">CineGen AI</h1>
+        <p class="text-xs text-gray-400">AI Prompt to Video Studio</p>
+      </div>
+    </div>
+
+    <button onclick="openSettings()"
+      class="glass px-4 py-2 text-sm">
+      ⚙️ Settings
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-7xl mx-auto p-4 md:p-6">
+
+  <!-- HERO -->
+  <section class="text-center py-8 md:py-12">
+    <div class="inline-block px-4 py-2 rounded-full bg-purple-500/10 text-purple-300 text-xs mb-4">
+      ✨ CREATIVE VIDEO STUDIO
+    </div>
+
+    <h2 class="text-3xl md:text-5xl font-black mb-4">
+      Turn Your Ideas Into
+      <span class="gradient-text">Visual Stories</span>
+    </h2>
+
+    <p class="text-gray-400 max-w-xl mx-auto">
+      Create animated video previews from your imagination
+      with CineGen AI Studio.
+    </p>
+  </section>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+
+    <!-- LEFT PANEL -->
+    <section class="glass p-5 space-y-5">
+
+      <div>
+        <h3 class="font-bold text-lg mb-1">🎨 Create Your Video</h3>
+        <p class="text-gray-400 text-sm">
+          Describe the video you want to create.
+        </p>
+      </div>
+
+      <!-- PROMPT -->
+      <div>
+        <label class="text-sm font-semibold block mb-2">
+          Video Prompt
+        </label>
+
+        <textarea
+          id="prompt"
+          rows="5"
+          maxlength="1500"
+          placeholder="Contoh: A cinematic shot of a futuristic city at sunset, flying cars, neon lights, ultra realistic..."
+          class="w-full rounded-xl p-4 text-sm resize-y"
+        ></textarea>
+
+        <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <span>Describe your imagination</span>
+          <span id="charCount">0 / 1500</span>
+        </div>
+      </div>
+
+      <!-- STYLE -->
+      <div>
+        <label class="text-sm font-semibold block mb-2">
+          Visual Style
+        </label>
+
+        <select id="style" class="w-full rounded-xl p-3 text-sm">
+          <option value="cinematic">🎬 Cinematic</option>
+          <option value="anime">🌸 Anime</option>
+          <option value="realistic">📸 Realistic</option>
+          <option value="fantasy">🧙 Fantasy</option>
+          <option value="scifi">🚀 Science Fiction</option>
+          <option value="cartoon">🎨 Cartoon</option>
+          <option value="nature">🌿 Nature</option>
+        </select>
+      </div>
+
+      <!-- RATIO -->
+      <div>
+        <label class="text-sm font-semibold block mb-2">
+          Aspect Ratio
+        </label>
+
+        <select id="ratio" class="w-full rounded-xl p-3 text-sm">
+          <option value="16:9">16:9 Landscape</option>
+          <option value="9:16">9:16 Portrait</option>
+          <option value="1:1">1:1 Square</option>
+        </select>
+      </div>
+
+      <!-- DURATION -->
+      <div>
+        <label class="text-sm font-semibold block mb-2">
+          Preview Duration
+        </label>
+
+        <select id="duration" class="w-full rounded-xl p-3 text-sm">
+          <option value="5">5 Seconds</option>
+          <option value="10" selected>10 Seconds</option>
+          <option value="15">15 Seconds</option>
+          <option value="20">20 Seconds</option>
+        </select>
+      </div>
+
+      <!-- GENERATE -->
+      <button id="generateBtn"
+        onclick="generateVideo()"
+        class="gradient w-full rounded-xl py-4 font-bold text-white shadow-lg shadow-purple-900/30">
+        ✨ Generate Video Preview
+      </button>
+
+      <button onclick="clearPrompt()"
+        class="w-full rounded-xl py-3 border border-white/10 text-gray-400 text-sm">
+        Clear Prompt
+      </button>
+
+      <div class="text-xs text-gray-500 text-center">
+        Demo preview generator. Real AI video generation requires an AI video API.
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section class="glass p-5 space-y-4">
+
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-bold text-lg">🎥 Video Preview</h3>
+          <p class="text-xs text-gray-400">Your generated animation</p>
+        </div>
+
+        <span id="status"
+          class="text-xs px-3 py-1 rounded-full bg-gray-700 text-gray-300">
+          Waiting
+        </span>
+      </div>
+
+      <!-- CANVAS -->
+      <div id="previewBox"
+        class="w-full aspect-video rounded-xl overflow-hidden border border-white/10 relative">
+
+        <canvas id="videoCanvas" width="1280" height="720"></canvas>
+
+        <div id="emptyState"
+          class="absolute inset-0 flex items-center justify-center bg-black/40 text-center p-5">
+          <div>
+            <div class="text-5xl mb-3">🎬</div>
+            <p class="font-bold">Your video appears here</p>
+            <p class="text-gray-400 text-xs mt-2">
+              Enter a prompt and click Generate.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div>
+        <div class="flex justify-between text-xs mb-2">
+          <span class="text-gray-400">Preview Progress</span>
+          <span id="progressText">0%</span>
+        </div>
+
+        <div class="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+          <div id="progressBar"
+            class="gradient h-full rounded-full"
+            style="width:0%">
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="togglePlayback()"
+          id="playBtn"
+          class="glass py-3 rounded-xl text-sm font-semibold">
+          ▶ Play
+        </button>
+
+        <button onclick="downloadVideo()"
+          class="gradient py-3 rounded-xl text-sm font-semibold">
+          ⬇ Download WebM
+        </button>
+      </div>
+
+      <div class="border-t border-white/10 pt-4">
+        <h4 class="font-bold text-sm mb-3">📋 Video Information</h4>
+
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Style</span>
+            <span id="infoStyle">-</span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-gray-400">Aspect Ratio</span>
+            <span id="infoRatio">-</span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-gray-400">Duration</span>
+            <span id="infoDuration">-</span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-gray-400">Format</span>
+            <span>WebM</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- STORYBOARD -->
+  <section class="glass p-5 mt-6">
+    <h3 class="font-bold text-lg mb-2">🎞️ Storyboard</h3>
+
+    <p class="text-gray-400 text-sm mb-4">
+      Scenes generated from your prompt.
+    </p>
+
+    <div id="storyboard" class="grid sm:grid-cols-3 gap-3">
+      <div class="bg-black/30 rounded-xl p-4 text-center text-gray-500 text-sm">
+        No scenes yet.
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal"
+    class="fixed inset-0 z-[100] bg-black/80 hidden items-center justify-center p-4">
+
+    <div class="glass p-6 w-full max-w-md">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="font-bold text-lg">⚙️ Settings</h3>
+        <button onclick="closeSettings()" class="text-gray-400 text-xl">✕</button>
+      </div>
+
+      <label class="text-sm block mb-2">AI Video API Key</label>
+
+      <input id="apiKey"
+        type="password"
+        placeholder="Enter your API key"
+        class="w-full rounded-xl p-3 text-sm mb-3">
+
+      <p class="text-xs text-yellow-400 mb-4">
+        Demo version: API key is not connected to a video generation service.
+        Do not put secret production API keys in a public HTML file.
+      </p>
+
+      <button onclick="saveSettings()"
+        class="gradient w-full rounded-xl py-3 font-bold">
+        Save Settings
+      </button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="text-center py-10 text-xs text-gray-500">
+    <div class="text-lg font-black gradient-text mb-2">CineGen AI</div>
+    AI Prompt to Video Studio · Demo Edition
+    <p class="mt-2">© 2026 CineGen AI. All rights reserved.</p>
+  </footer>
+
+</main>
+
+<script>
+  const canvas = document.getElementById("videoCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const promptInput = document.getElementById("prompt");
+  const generateBtn = document.getElementById("generateBtn");
+
+  let animationId = null;
+  let isPlaying = false;
+  let generated = false;
+  let startTime = 0;
+  let elapsed = 0;
+  let duration = 10;
+  let recorder = null;
+  let recordedChunks = [];
+  let recording = false;
+  let currentPrompt = "";
+
+  const colors = {
+    cinematic: ["#080b25", "#39235d"],
+    anime: ["#27134d", "#ed72a5"],
+    realistic: ["#12334b", "#7ba9bd"],
+    fantasy: ["#30134f", "#a15bd5"],
+    scifi: ["#061e36", "#087e9c"],
+    cartoon: ["#f07d38", "#f2ca52"],
+    nature: ["#063c32", "#72aa58"]
+  };
+
+  // Character counter
+  promptInput.addEventListener("input", () => {
+    document.getElementById("charCount").textContent =
+      promptInput.value.length + " / 1500";
+  });
+
+  function setStatus(text, color = "gray") {
+    const status = document.getElementById("status");
+    status.textContent = text;
+    status.className =
+      "text-xs px-3 py-1 rounded-full bg-" +
+      color + "-500/20 text-" + color + "-300";
+  }
+
+  function resizeCanvas() {
+    const ratio = document.getElementById("ratio").value;
+
+    if (ratio === "9:16") {
+      canvas.width = 720;
+      canvas.height = 1280;
+    } else if (ratio === "1:1") {
+      canvas.width = 900;
+      canvas.height = 900;
+    } else {
+      canvas.width = 1280;
+      canvas.height = 720;
+    }
+  }
+
+  function drawScene(time) {
+    const style = document.getElementById("style").value;
+    const palette = colors[style] || colors.cinematic;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const gradient = ctx.createLinearGradient(0, 0, w, h);
+    gradient.addColorStop(0, palette[0]);
+    gradient.addColorStop(1, palette[1]);
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    // Animated stars
+    for (let i = 0; i < 100; i++) {
+      const x = (i * 137.5) % w;
+      const y = (i * 91.7) % h;
+      const twinkle = Math.sin(time * 2 + i) * 0.5 + 0.5;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 1 + twinkle * 2, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255," +
+        (0.2 + twinkle * 0.7) + ")";
+      ctx.fill();
+    }
+
+    // Glowing sun
+    const sunX = w * 0.75;
+    const sunY = h * 0.32;
+    const sunRadius = Math.min(w, h) * 0.11;
+
+    const sun = ctx.createRadialGradient(
+      sunX, sunY, 5,
+      sunX, sunY, sunRadius * 2
+    );
+
+    sun.addColorStop(0, "rgba(255,220,180,.95)");
+    sun.addColorStop(0.4, "rgba(255,120,160,.3)");
+    sun.addColorStop(1, "rgba(255,100,150,0)");
+
+    ctx.fillStyle = sun;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffd5c0";
+    ctx.fill();
+
+    // Landscape
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.72);
+    ctx.lineTo(w * 0.2, h * 0.48);
+    ctx.lineTo(w * 0.4, h * 0.75);
+    ctx.lineTo(w * 0.62, h * 0.45);
+    ctx.lineTo(w * 0.85, h * 0.73);
+    ctx.lineTo(w, h * 0.55);
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+
+    ctx.fillStyle = "rgba(8,10,28,.8)";
+    ctx.fill();
+
+    // Moving foreground
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.fillRect(0, h * 0.86, w, h * 0.14);
+
+    // Text
+    ctx.textAlign = "center";
+    ctx.fillStyle = "white";
+    ctx.shadowColor = "rgba(0,0,0,.8)";
+    ctx.shadowBlur = 15;
+
+    const titleSize = Math.max(22, Math.min(w, h) * 0.045);
+    ctx.font = "bold " + titleSize + "px Arial";
+
+    const words = currentPrompt.split(" ");
+    let title = words.slice(0, 7).join(" ");
+
+    if (title.length > 65) {
+      title = title.slice(0, 62) + "...";
+    }
+
+    ctx.fillText(title, w / 2, h * 0.88, w * 0.85);
+
+    ctx.shadowBlur = 0;
+    ctx.font = Math.max(14, titleSize * 0.42) + "px Arial";
+    ctx.fillStyle = "rgba(255,255,255,.7)";
+    ctx.fillText("CINEGEN AI STUDIO", w / 2, h * 0.94);
+
+    // Time
+    ctx.font = "14px Arial";
+    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255,255,255,.65)";
+    ctx.fillText(
+      elapsed.toFixed(1) + "s / " + duration + "s",
+      w - 20,
+      30
+    );
+  }
+
+  function animate() {
+    if (!isPlaying) return;
+
+    elapsed = Math.min(
+      duration,
+      (performance.now() - startTime) / 1000
+    );
+
+    drawScene(elapsed);
+
+    const progress = Math.round(
+      (elapsed / duration) * 100
+    );
+
+    document.getElementById("progressBar").style.width =
+      progress + "%";
+
+    document.getElementById("progressText").textContent =
+      progress + "%";
+
+    if (elapsed >= duration) {
+      isPlaying = false;
+      cancelAnimationFrame(animationId);
+
+      document.getElementById("playBtn").textContent = "▶ Replay";
+      setStatus("Completed", "green");
+
+      if (recording && recorder && recorder.state === "recording") {
+        recorder.stop();
+      }
+
+      return;
+    }
+
+    animationId = requestAnimationFrame(animate);
+  }
+
+  function generateStoryboard(prompt) {
+    const scenes = [
+      {
+        title: "Scene 01",
+        name: "Opening Shot",
+        icon: "🌅",
+        description: "Establishing shot and atmosphere."
+      },
+      {
+        title: "Scene 02",
+        name: "Main Scene",
+        icon: "🎥",
+        description: "Main visual action and storytelling."
+      },
+      {
+        title: "Scene 03",
+        name: "Final Shot",
+        icon: "✨",
+        description: "Cinematic ending and final atmosphere."
+      }
+    ];
+
+    document.getElementById("storyboard").innerHTML =
+      scenes.map(scene => `
+        <div class="rounded-xl bg-black/30 border border-white/10 p-4">
+          <div class="text-3xl mb-3">${scene.icon}</div>
+          <div class="text-xs text-purple-300">${scene.title}</div>
+          <div class="font-bold mt-1">${scene.name}</div>
+          <p class="text-xs text-gray-400 mt-2">${scene.description}</p>
+        </div>
+      `).join("");
+  }
+
+  async function generateVideo() {
+    const prompt = promptInput.value.trim();
+
+    if (!prompt) {
+      alert("Silakan masukkan prompt video terlebih dahulu.");
+      promptInput.focus();
+      return;
+    }
+
+    if (isPlaying) {
+      isPlaying = false;
+      cancelAnimationFrame(animationId);
+    }
+
+    generateBtn.disabled = true;
+    generateBtn.innerHTML =
+      '<span class="loader inline-block align-middle mr-2"></span> Generating...';
+
+    setStatus("Generating", "purple");
+
+    currentPrompt = prompt;
+    duration = Number(document.getElementById("duration").value);
+
+    resizeCanvas();
+
+    document.getElementById("emptyState").style.display = "none";
+
+    document.getElementById("infoStyle").textContent =
+      document.getElementById("style").selectedOptions[0].text;
+
+    document.getElementById("infoRatio").textContent =
+      document.getElementById("ratio").value;
+
+    document.getElementById("infoDuration").textContent =
+      duration + " seconds";
+
+    generateStoryboard(prompt);
+
+    // Demo rendering delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    generated = true;
+    elapsed = 0;
+    startTime = performance.now();
+    isPlaying = true;
+
+    drawScene(0);
+    animate();
+
+    document.getElementById("playBtn").textContent = "⏸ Pause";
+
+    generateBtn.disabled = false;
+    generateBtn.textContent = "✨ Generate Video Preview";
+
+    setStatus("Preview Ready", "green");
+  }
+
+  function togglePlayback() {
+    if (!generated) {
+      alert("Generate a preview terlebih dahulu.");
+      return;
+    }
+
+    if (isPlaying) {
+      isPlaying = false;
+      cancelAnimationFrame(animationId);
+
+      document.getElementById("playBtn").textContent = "▶ Play";
+      setStatus("Paused", "yellow");
+    } else {
+      if (elapsed >= duration) elapsed = 0;
+
+      startTime = performance.now() - elapsed * 1000;
+      isPlaying = true;
+
+      document.getElementById("playBtn").textContent = "⏸ Pause";
+      setStatus("Playing", "green");
+
+      animate();
+    }
+  }
+
+  function downloadVideo() {
+    if (!generated) {
+      alert("Buat preview terlebih dahulu.");
+      return;
+    }
+
+    if (!canvas.captureStream || !window.MediaRecorder) {
+      alert("Browser ini belum mendukung perekaman WebM.");
+      return;
+    }
+
+    if (recording) return;
+
+    if (isPlaying) {
+      isPlaying = false;
+      cancelAnimationFrame(animationId);
+    }
+
+    recordedChunks = [];
+
+    const stream = canvas.captureStream(30);
+
+    let mimeType = "video/webm";
+
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      alert("Format WebM tidak didukung pada perangkat ini.");
+      return;
+    }
+
+    try {
+      recorder = new MediaRecorder(stream, {
+        mimeType: mimeType
+      });
+    } catch (error) {
+      alert("Gagal memulai perekaman: " + error.message);
+      return;
+    }
+
+    recorder.ondataavailable = event => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(recordedChunks, {
+        type: mimeType
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "cinegen-ai-preview.webm";
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      stream.getTracks().forEach(track => track.stop());
+
+      recording = false;
+      elapsed = 0;
+      drawScene(0);
+
+      document.getElementById("playBtn").textContent = "▶ Play";
+      setStatus("Download Ready", "green");
+   

@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK with Capacitor
 
 on:
   push:
@@ -17,38 +17,29 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Generate Android Project
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Initialize Capacitor App
         run: |
-          mkdir -p project/app/src/main/assets
-          mkdir -p project/app/src/main/java/com/cinegen/ai
-          mkdir -p project/app/src/main/res/values
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "CineGen AI" "com.cinegen.ai" --web-dir www
 
-          # Salin index.html utama ke assets Android
-          cp index.html project/app/src/main/assets/index.html
+          # Buat folder www dan masukkan index.html
+          mkdir -p www
+          cp index.html www/index.html
 
-          # AndroidManifest.xml
-          cat << 'EOF' > project/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.cinegen.ai">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <application
-                  android:label="CineGen AI"
-                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
+          # Tambahkan platform android
+          npx cap add android
 
-          # Masukkan MainActivity.java yang sudah kamu sediakan
-          cat << 'EOF' > project/app/src/main/java/com/cinegen/ai/MainActivity.java
+      - name: Inject Custom MainActivity Java Code
+        run: |
+          # Timpa MainActivity.java bawaan dengan kode lengkap milikmu
+          mkdir -p android/app/src/main/java/com/cinegen/ai
+          cat << 'EOF' > android/app/src/main/java/com/cinegen/ai/MainActivity.java
           package com.cinegen.ai;
 
           import android.app.Activity;
@@ -80,19 +71,12 @@ jobs:
 
                   WebSettings settings = webView.getSettings();
 
-                  // JavaScript
                   settings.setJavaScriptEnabled(true);
                   settings.setJavaScriptCanOpenWindowsAutomatically(true);
-
-                  // Web storage
                   settings.setDomStorageEnabled(true);
                   settings.setDatabaseEnabled(true);
-
-                  // Local HTML access
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
-
-                  // Display
                   settings.setLoadWithOverviewMode(true);
                   settings.setUseWideViewPort(true);
                   settings.setSupportZoom(false);
@@ -112,7 +96,7 @@ jobs:
 
                   webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-                  webView.loadUrl("file:///android_asset/index.html");
+                  webView.loadUrl("file:///android_asset/public/index.html");
               }
 
               @Override
@@ -135,81 +119,10 @@ jobs:
           }
           EOF
 
-          # build.gradle (app)
-          cat << 'EOF' > project/app/build.gradle
-          plugins {
-              id 'com.android.application'
-          }
-          android {
-              namespace 'com.cinegen.ai'
-              compileSdk 34
-              defaultConfig {
-                  applicationId "com.cinegen.ai"
-                  minSdk 21
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0"
-              }
-          }
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-          }
-          EOF
-
-          # settings.gradle
-          cat << 'EOF' > project/settings.gradle
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "CineGen"
-          include ':app'
-          EOF
-
-          # build.gradle (root)
-          cat << 'EOF' > project/build.gradle
-          buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.1.2'
-              }
-          }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          EOF
-
-          # gradle-wrapper.properties
-          mkdir -p project/gradle/wrapper
-          cat << 'EOF' > project/gradle/wrapper/gradle-wrapper.properties
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-bin.zip
-          zipStoreBase=GRADLE_DISTRIBUTION-ZIPS
-          networkTimeout=10000
-          validateDistributionUrl=true
-          EOF
-
-      - name: Build APK with Gradle
+      - name: Build Android APK
         run: |
-          cd project
-          gradle wrapper
+          npx cap sync android
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
@@ -217,5 +130,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CineGen-APK
-          path: project/app/build/outputs/apk/debug/app-debug.apk
-          
+          path: android/app/build/outputs/apk/debug/app-debug.apk
